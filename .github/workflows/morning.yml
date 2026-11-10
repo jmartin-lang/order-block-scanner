@@ -1,0 +1,41 @@
+name: morning digest
+on:
+  schedule:
+    - cron: '30 12,13 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Send even outside the 8-9am ET window'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: morning
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Fresh scan
+        run: python gen_obs.py
+        env:
+          ALPACA_KEY: ${{ secrets.ALPACA_KEY }}
+          ALPACA_SECRET: ${{ secrets.ALPACA_SECRET }}
+      - name: Send digest
+        run: python notify.py digest ${{ inputs.force && '--force' || '' }}
+        env:
+          DIGEST_EMAILS: ${{ vars.DIGEST_EMAILS }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM: ${{ vars.SMTP_FROM }}
+          NTFY_DIGEST_TOPIC: ${{ secrets.NTFY_DIGEST_TOPIC }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

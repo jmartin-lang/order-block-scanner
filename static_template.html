@@ -20,7 +20,7 @@ button:focus-visible{outline:2px solid var(--fg);outline-offset:1px}
 table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
 th{text-align:left;font-weight:500;color:var(--mut);padding:8px 10px;white-space:nowrap;border-bottom:1px solid var(--line)}
 td{padding:7px 10px;white-space:nowrap;border-bottom:1px solid var(--line)}tr:last-child td{border-bottom:0}
-td.n{text-align:right}td.sym{font-weight:600}td.demand{color:var(--ok);text-transform:capitalize}td.supply{color:var(--bad);text-transform:capitalize}td.in{color:var(--warn);font-weight:600}
+td.n{text-align:right}td.sym{font-weight:600}td.ch{padding:3px 10px}td.ch svg{display:block}td.demand{color:var(--ok);text-transform:capitalize}td.supply{color:var(--bad);text-transform:capitalize}td.in{color:var(--warn);font-weight:600}
 details{color:var(--mut);font-size:12.5px}details summary{cursor:pointer;color:var(--fg)}details p{margin:6px 0 0;max-width:75ch}
 .empty{padding:14px;color:var(--mut)}
 @media (max-width:640px){.hn{display:none}}
@@ -29,6 +29,7 @@ details{color:var(--mut);font-size:12.5px}details summary{cursor:pointer;color:v
 <section class="card"><div class="filters">
 <div class="grp"><span>Side</span><div class="seg" data-k="side"><button data-v="all">All</button><button data-v="demand">Demand</button><button data-v="supply">Supply</button></div></div>
 <div class="grp"><span>Timeframe</span><div class="seg" data-k="tf"><button data-v="all">All</button><button data-v="15m">15m</button><button data-v="1H">1H</button></div></div>
+<div class="grp"><span>Universe</span><div class="seg" data-k="group"><button data-v="all">All</button><button data-v="Large">Large caps</button><button data-v="Mid">Mid caps</button><button data-v="Mover">Movers</button></div></div>
 <div class="grp"><span>Push out of block</span><div class="seg" data-k="push"><button data-v="3">3+ ATR</button><button data-v="5">5+ ATR</button><button data-v="8">8+ ATR</button><button data-v="12">12+ ATR</button></div></div>
 <div class="grp"><span>4H block overlap</span><div class="seg" data-k="h4"><button data-v="all">Any</button><button data-v="1">4H aligned</button></div></div>
 <div class="grp"><span>Push volume</span><div class="seg" data-k="quiet"><button data-v="all">Any</button><button data-v="q">Quiet only</button></div></div>
@@ -37,9 +38,9 @@ details{color:var(--mut);font-size:12.5px}details summary{cursor:pointer;color:v
 <div class="grp"><span>Symbol</span><input type="search" id="q" placeholder="e.g. VICI" aria-label="Filter by symbol" style="font:inherit;font-size:12.5px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);width:8.5rem"></div>
 </div><p class="note" style="margin:10px 0 0">Updates about once a minute while the host is online. Filters need JavaScript, so open this in Safari or Chrome rather than a message preview.</p></section>
 <section class="card"><h2>Fresh blocks, nearest to price</h2><p class="note">Thin blocks (zone 1 ATR tall or less) that price pushed hard away from and has not come back to yet. Closest to the last price first.</p>
-<div class="tbox"><table><thead><tr><th>Symbol</th><th>TF</th><th>Side</th><th>Zone low</th><th>Zone high</th><th class="hn">Height (ATR)</th><th>Push (ATR)</th><th class="hn">Push vol</th><th class="hn">Formed</th><th class="hn">4H</th><th>Block candle (<span class="tz">ET</span>)</th><th class="hn">Last</th><th>To zone</th></tr></thead><tbody id="near"></tbody></table></div></section>
+<div class="tbox"><table><thead><tr><th>Symbol</th><th>TF</th><th class="hn">Group</th><th>Side</th><th>Chart</th><th>Zone low</th><th>Zone high</th><th class="hn">Height (ATR)</th><th>Push (ATR)</th><th class="hn">Push vol</th><th class="hn">Formed</th><th class="hn">4H</th><th>Block candle (<span class="tz">ET</span>)</th><th class="hn">Last</th><th>To zone</th></tr></thead><tbody id="near"></tbody></table></div></section>
 <section class="card"><h2>Revisited blocks</h2><p class="note">The same kind of block, after price came back into it on a later day without closing through it. Most recent touch first. Blocks first tapped on the same day as their block candle are left out.</p>
-<div class="tbox"><table><thead><tr><th>Symbol</th><th>TF</th><th>Side</th><th>Zone low</th><th>Zone high</th><th>Push (ATR)</th><th class="hn">Push vol</th><th class="hn">Formed</th><th class="hn">4H</th><th>Block candle (<span class="tz">ET</span>)</th><th>Last touch (<span class="tz">ET</span>)</th><th class="hn">Touches</th><th>Tagged last bar</th></tr></thead><tbody id="ret"></tbody></table></div></section>
+<div class="tbox"><table><thead><tr><th>Symbol</th><th>TF</th><th class="hn">Group</th><th>Side</th><th>Chart</th><th>Zone low</th><th>Zone high</th><th>Push (ATR)</th><th class="hn">Push vol</th><th class="hn">Formed</th><th class="hn">4H</th><th>Block candle (<span class="tz">ET</span>)</th><th>Last touch (<span class="tz">ET</span>)</th><th class="hn">Touches</th><th>Tagged last bar</th></tr></thead><tbody id="ret"></tbody></table></div></section>
 <details><summary>How blocks are found</summary>
 <p>A demand block is the last down candle before a bullish push that breaks the prior swing high. A supply block is the last up candle before a bearish push that breaks the prior swing low. The time shown is the open time of that last opposite-colour candle, which is the candle the zone is drawn from. A block is only listed once the pushing bar has closed. Push vol is the average volume of the pushing bars against the usual volume; quiet means 0.92x or less.</p>
 <p>This page keeps only thin blocks (zone 1 ATR tall or less) where price then ran at least the chosen number of ATR away before first coming back. Push is measured from the zone edge to the furthest price reached before the first revisit. 4H aligned means an unbroken 4H block on the same side overlaps the zone. Both in-session and gap-formed blocks are included.</p>
@@ -48,29 +49,34 @@ details{color:var(--mut);font-size:12.5px}details summary{cursor:pointer;color:v
 </div>
 <script>
 var DATA=__DATA__;
-var S={side:'all',tf:'all',push:'5',h4:'all',quiet:'all',formed:'all',q:'',tz:'ET'},N=10;
+var S={side:'all',tf:'all',group:'all',push:'5',h4:'all',quiet:'all',formed:'all',q:'',tz:'ET'},N=10;
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function ft(s){var m=/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(s);if(!m)return s;
  var d=new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5]));if(S.tz==='PT')d=new Date(d.getTime()-3*3600000);
  var h=d.getUTCHours(),ap=h>=12?'PM':'AM';h=h%12||12;return MON[d.getUTCMonth()]+' '+d.getUTCDate()+', '+h+':'+('0'+d.getUTCMinutes()).slice(-2)+' '+ap}
+function sparkSvg(x){var s=x.spark||[],n=s.length;if(n<2)return '';var w=120,h=34,p=2,lo=Math.min(Math.min.apply(null,s),x.zone_low),hi=Math.max(Math.max.apply(null,s),x.zone_high),rg=(hi-lo)||1;
+ function X(i){return p+(i/(n-1))*(w-2*p)}function Y(v){return h-p-(v-lo)/rg*(h-2*p)}
+ var pts=s.map(function(v,i){return X(i).toFixed(1)+','+Y(v).toFixed(1)}).join(' ');var zx=X(x.sx),zy=Y(x.zone_high),zh=Math.max(2,Y(x.zone_low)-Y(x.zone_high));
+ var col=x.side==='demand'?'var(--ok)':'var(--bad)';
+ return '<svg viewBox="0 0 120 34" width="120" height="34" role="img" aria-label="price since the block candle with the zone shaded"><rect x="'+zx.toFixed(1)+'" y="'+zy.toFixed(1)+'" width="'+(w-p-zx).toFixed(1)+'" height="'+zh.toFixed(1)+'" fill="'+col+'" opacity=".3"/><polyline points="'+pts+'" fill="none" stroke="var(--fg)" stroke-width="1.2" stroke-linejoin="round"/><circle cx="'+X(n-1).toFixed(1)+'" cy="'+Y(s[n-1]).toFixed(1)+'" r="2" fill="var(--fg)"/></svg>'}
 function f2(n){return n.toFixed(2)}
 function f1(n){return n.toFixed(1)}
-function base(){var q=S.q.trim().toUpperCase();return DATA.filter(function(x){return(!q||x.symbol.indexOf(q)===0)&&(S.side==='all'||x.side===S.side)&&(S.tf==='all'||x.timeframe===S.tf)&&(x.run_atr>=+S.push)&&(S.h4==='all'||x.mtf_4h===1)&&(S.quiet==='all'||x.vol_x<=0.92)&&(S.formed==='all'||x.formed===S.formed)})}
+function base(){var q=S.q.trim().toUpperCase();return DATA.filter(function(x){return(!q||x.symbol.indexOf(q)===0)&&(S.side==='all'||x.side===S.side)&&(S.tf==='all'||x.timeframe===S.tf)&&(S.group==='all'||x.group===S.group)&&(x.run_atr>=+S.push)&&(S.h4==='all'||x.mtf_4h===1)&&(S.quiet==='all'||x.vol_x<=0.92)&&(S.formed==='all'||x.formed===S.formed)})}
 function near(){return base().filter(function(x){return x.status==='fresh'}).sort(function(a,b){return Math.abs(a.dist_pct)-Math.abs(b.dist_pct)||a.vol_rank-b.vol_rank}).slice(0,N)}
 function ret(){return base().filter(function(x){return x.status==='tested'&&x.last_touch&&x.first_touch.slice(0,10)!==x.ob_candle.slice(0,10)}).sort(function(a,b){return a.last_touch<b.last_touch?1:a.last_touch>b.last_touch?-1:(a.confirmed<b.confirmed?1:a.confirmed>b.confirmed?-1:a.vol_rank-b.vol_rank)}).slice(0,N)}
 function fill(id,list,cols){var tb=document.getElementById(id);tb.replaceChildren();
- if(!list.length){var tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=13;td.className='empty';td.textContent='No blocks match these filters.';tr.appendChild(td);tb.appendChild(tr);return}
- list.forEach(function(x){var tr=document.createElement('tr');cols.forEach(function(c){var v=c(x),td=document.createElement('td');td.textContent=v[0];if(v[1])td.className=v[1];tr.appendChild(td)});tb.appendChild(tr)})}
+ if(!list.length){var tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=15;td.className='empty';td.textContent='No blocks match these filters.';tr.appendChild(td);tb.appendChild(tr);return}
+ list.forEach(function(x){var tr=document.createElement('tr');cols.forEach(function(c){var v=c(x),td=document.createElement('td');if(v[2])td.innerHTML=v[0];else td.textContent=v[0];if(v[1])td.className=v[1];tr.appendChild(td)});tb.appendChild(tr)})}
 function draw(){
  document.querySelectorAll('.tz').forEach(function(e){e.textContent=S.tz});scopeText();
  document.querySelectorAll('.seg').forEach(function(sg){sg.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.v===S[sg.dataset.k]))})});
  var a=near(),r=ret();
- fill('near',a,[function(x){return[x.symbol,'sym']},function(x){return[x.timeframe]},function(x){return[x.side,x.side]},function(x){return[f2(x.zone_low),'n']},function(x){return[f2(x.zone_high),'n']},function(x){return[f2(x.zone_atr),'n hn']},function(x){return[f1(x.run_atr),'n']},function(x){return[f2(x.vol_x)+'x','n hn']},function(x){return[x.formed,'hn']},function(x){return[x.mtf_4h?'yes':'','hn']},function(x){return[ft(x.ob_candle)]},function(x){return[f2(x.last_price),'n hn']},function(x){return[(x.dist_pct>0?'+':'')+f2(x.dist_pct)+'%','n']}]);
- fill('ret',r,[function(x){return[x.symbol,'sym']},function(x){return[x.timeframe]},function(x){return[x.side,x.side]},function(x){return[f2(x.zone_low),'n']},function(x){return[f2(x.zone_high),'n']},function(x){return[f1(x.run_atr),'n']},function(x){return[f2(x.vol_x)+'x','n hn']},function(x){return[x.formed,'hn']},function(x){return[x.mtf_4h?'yes':'','hn']},function(x){return[ft(x.ob_candle)]},function(x){return[ft(x.last_touch)]},function(x){return[String(x.touches),'n hn']},function(x){return[x.in_zone_now?'yes':'no',x.in_zone_now?'in':'']}]);
+ fill('near',a,[function(x){return[x.symbol,'sym']},function(x){return[x.timeframe]},function(x){return[x.group,'hn']},function(x){return[x.side,x.side]},function(x){return[sparkSvg(x),'ch',1]},function(x){return[f2(x.zone_low),'n']},function(x){return[f2(x.zone_high),'n']},function(x){return[f2(x.zone_atr),'n hn']},function(x){return[f1(x.run_atr),'n']},function(x){return[f2(x.vol_x)+'x','n hn']},function(x){return[x.formed,'hn']},function(x){return[x.mtf_4h?'yes':'','hn']},function(x){return[ft(x.ob_candle)]},function(x){return[f2(x.last_price),'n hn']},function(x){return[(x.dist_pct>0?'+':'')+f2(x.dist_pct)+'%','n']}]);
+ fill('ret',r,[function(x){return[x.symbol,'sym']},function(x){return[x.timeframe]},function(x){return[x.group,'hn']},function(x){return[x.side,x.side]},function(x){return[sparkSvg(x),'ch',1]},function(x){return[f2(x.zone_low),'n']},function(x){return[f2(x.zone_high),'n']},function(x){return[f1(x.run_atr),'n']},function(x){return[f2(x.vol_x)+'x','n hn']},function(x){return[x.formed,'hn']},function(x){return[x.mtf_4h?'yes':'','hn']},function(x){return[ft(x.ob_candle)]},function(x){return[ft(x.last_touch)]},function(x){return[String(x.touches),'n hn']},function(x){return[x.in_zone_now?'yes':'no',x.in_zone_now?'in':'']}]);
  var s=[];if(a.length)s.push('Nearest fresh thin block: '+a[0].symbol+' '+a[0].timeframe+' '+a[0].side+', '+f2(Math.abs(a[0].dist_pct))+'% '+(a[0].dist_pct<0?'above':'below')+' price.');
  if(r.length)s.push('Latest retrace: '+r[0].symbol+' '+r[0].timeframe+' '+r[0].side+(r[0].in_zone_now?', and it tagged the zone on the latest bar.':', touched '+ft(r[0].last_touch)+'.'));
  document.getElementById('take').textContent=s.join(' ')}
-function scopeText(){document.getElementById('scope').textContent='Top 100 stocks in SPY and QQQ by average volume. Thin order blocks (1 ATR or less) that price pushed away from by at least '+S.push+' ATR, formed in the last 7 sessions. Data as of '+ft(DATA[0].asof.replace(' ET',''))+' '+S.tz+'.'}
+function scopeText(){document.getElementById('scope').textContent='Universe: S&P 500, Nasdaq-100 and S&P 400 stocks ranked by average volume (top 250), plus today\'s biggest movers and most active names. Thin order blocks (1 ATR or less) that price pushed away from by at least '+S.push+' ATR, formed in the last 7 sessions. Data as of '+ft(DATA[0].asof.replace(' ET',''))+' '+S.tz+'.'}
 scopeText();
 document.getElementById('q').addEventListener('input',function(e){S.q=e.target.value;draw()});
 document.querySelectorAll('.seg').forEach(function(sg){sg.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;S[sg.dataset.k]=b.dataset.v;draw()})});
