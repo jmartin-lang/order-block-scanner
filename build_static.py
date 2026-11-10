@@ -19,11 +19,12 @@ def tv_link(s):
     s=H.escape(str(s),quote=True);return f'<a class="tv" href="https://www.tradingview.com/chart/?symbol={s}&amp;interval=15" target="_blank" rel="noopener" title="Open {s} on TradingView, 15 minute chart">{s}</a>'
 def tdh(h,c=''):return f'<td class="{c}">{h}</td>'
 def td(t,c=''):return f'<td class="{c}">{H.escape(str(t))}</td>' if c else f'<td>{H.escape(str(t))}</td>'
+def lb(x):return f'<button class="logb" data-sym="{H.escape(str(x.symbol))}" data-tf="{x.timeframe}" data-side="{x.side}" data-lo="{f2(x.zone_low)}" data-hi="{f2(x.zone_high)}">Log</button>'
 dd=d[d.run_atr>=5]
 fresh=dd[dd.status=='fresh'].assign(a=lambda x:x.dist_pct.abs()).sort_values(['a','vol_rank']).head(10)
 tested=dd[(dd.status=='tested')&(dd.last_touch!='')&(dd.first_touch.str[:10]!=dd.ob_candle.str[:10])].sort_values(['last_touch','confirmed','vol_rank'],ascending=[False,False,True]).head(10)
-nr=''.join('<tr>'+tdh(tv_link(x.symbol),'sym')+td(x.timeframe)+td(x.group,'hn')+td(x.side,x.side)+tdh(spark_svg(x),'ch')+td(f2(x.zone_low),'n')+td(f2(x.zone_high),'n')+td(f'{x.run_atr:.1f}','n')+td(f'{x.vol_x:.2f}x','n hn')+td(x.formed,'hn')+td('yes' if x.mtf_4h else '','hn')+td(ft(x.ob_candle))+td(f2(x.last_price),'n hn')+td(('+' if x.dist_pct>0 else '')+f2(x.dist_pct)+'%','n')+'</tr>' for x in fresh.itertuples())
-rr=''.join('<tr>'+tdh(tv_link(x.symbol),'sym')+td(x.timeframe)+td(x.group,'hn')+td(x.side,x.side)+tdh(spark_svg(x),'ch')+td(f2(x.zone_low),'n')+td(f2(x.zone_high),'n')+td(f'{x.run_atr:.1f}','n')+td(f'{x.vol_x:.2f}x','n hn')+td(x.formed,'hn')+td('yes' if x.mtf_4h else '','hn')+td(ft(x.ob_candle))+td(ft(x.last_touch))+td(x.touches,'n hn')+td('yes' if x.in_zone_now else 'no','in' if x.in_zone_now else '')+'</tr>' for x in tested.itertuples())
+nr=''.join('<tr>'+tdh(tv_link(x.symbol),'sym')+td(x.timeframe)+td(x.group,'hn')+td(x.side,x.side)+tdh(spark_svg(x),'ch')+td(f2(x.zone_low),'n')+td(f2(x.zone_high),'n')+td(f'{x.run_atr:.1f}','n')+td(f'{x.vol_x:.2f}x','n hn')+td(x.formed,'hn')+td('yes' if x.mtf_4h else '','hn')+td(ft(x.ob_candle))+td(f2(x.last_price),'n hn')+td(('+' if x.dist_pct>0 else '')+f2(x.dist_pct)+'%','n')+tdh(lb(x))+'</tr>' for x in fresh.itertuples())
+rr=''.join('<tr>'+tdh(tv_link(x.symbol),'sym')+td(x.timeframe)+td(x.group,'hn')+td(x.side,x.side)+tdh(spark_svg(x),'ch')+td(f2(x.zone_low),'n')+td(f2(x.zone_high),'n')+td(f'{x.run_atr:.1f}','n')+td(f'{x.vol_x:.2f}x','n hn')+td(x.formed,'hn')+td('yes' if x.mtf_4h else '','hn')+td(ft(x.ob_candle))+td(ft(x.last_touch))+td(x.touches,'n hn')+td('yes' if x.in_zone_now else 'no','in' if x.in_zone_now else '')+tdh(lb(x))+'</tr>' for x in tested.itertuples())
 take=''
 if len(fresh):
     a_=fresh.iloc[0];take+=f"Nearest fresh thin block: {a_.symbol} {a_.timeframe} {a_.side}, {abs(a_.dist_pct):.2f}% {'above' if a_.dist_pct<0 else 'below'} price. "
@@ -36,7 +37,7 @@ import os
 J=json.load(open('journal.json')) if os.path.exists('journal.json') else []
 def jc(x):return td(x) if x not in (None,'') else td('')
 jr=''.join('<tr>'+td(e.get('date',''))+tdh(tv_link(e['symbol']) if e.get('symbol') else '','sym')+td(e.get('tf',''))+td(e.get('side'),e.get('side') or '')+td(e.get('entry',''),'n')+td(e.get('stop',''),'n')+td(e.get('exit',''),'n')+td(e.get('result',''),'n')+td(e.get('notes',''))+'</tr>' for e in sorted(J,key=lambda e:e.get('date',''),reverse=True)) or '<tr><td colspan="9">No trades logged yet.</td></tr>'
-t=open('static_template.html').read().replace('__DATA__',data)
+t=open('static_template.html').read().replace('__DATA__',data).replace('__JOURNAL__',json.dumps(J))
 t=t.replace('<tbody id="jr"></tbody>','<tbody id="jr">'+jr+'</tbody>')
 t=t.replace('<tbody id="near"></tbody>','<tbody id="near">'+nr+'</tbody>').replace('<tbody id="ret"></tbody>','<tbody id="ret">'+rr+'</tbody>')
 t=t.replace('<p class="sub" id="scope"></p>','<p class="sub" id="scope">'+scope+'</p>').replace('<p class="take" id="take"></p>','<p class="take" id="take">'+take+'</p>')
