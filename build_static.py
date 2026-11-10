@@ -32,7 +32,12 @@ if len(tested):
 scope=f"Universe: S&P 500, Nasdaq-100 and S&P 400 stocks ranked by average volume (top 250), plus today's biggest movers and most active names. Thin order blocks (1 ATR or less) that price pushed away from by at least 5 ATR, formed in the last 7 sessions. Data as of {ft(d['asof'].iloc[0].replace(' ET',''))} ET."
 keep=['symbol','vol_rank','group','spark','sx','timeframe','side','zone_low','zone_high','zone_atr','run_atr','vol_x','formed','mtf_4h','ob_candle','confirmed','status','first_touch','last_touch','touches','in_zone_now','last_price','dist_pct','asof']
 data=json.dumps(d[keep].to_dict('records'),separators=(',',':'))
+import os
+J=json.load(open('journal.json')) if os.path.exists('journal.json') else []
+def jc(x):return td(x) if x not in (None,'') else td('')
+jr=''.join('<tr>'+td(e.get('date',''))+tdh(tv_link(e['symbol']) if e.get('symbol') else '','sym')+td(e.get('tf',''))+td(e.get('side'),e.get('side') or '')+td(e.get('entry',''),'n')+td(e.get('stop',''),'n')+td(e.get('exit',''),'n')+td(e.get('result',''),'n')+td(e.get('notes',''))+'</tr>' for e in sorted(J,key=lambda e:e.get('date',''),reverse=True)) or '<tr><td colspan="9">No trades logged yet.</td></tr>'
 t=open('static_template.html').read().replace('__DATA__',data)
+t=t.replace('<tbody id="jr"></tbody>','<tbody id="jr">'+jr+'</tbody>')
 t=t.replace('<tbody id="near"></tbody>','<tbody id="near">'+nr+'</tbody>').replace('<tbody id="ret"></tbody>','<tbody id="ret">'+rr+'</tbody>')
 t=t.replace('<p class="sub" id="scope"></p>','<p class="sub" id="scope">'+scope+'</p>').replace('<p class="take" id="take"></p>','<p class="take" id="take">'+take+'</p>')
 open('public/index.html','w').write(t);open('public/data.json','w').write(data)
