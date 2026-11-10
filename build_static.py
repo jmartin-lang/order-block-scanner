@@ -22,7 +22,7 @@ def td(t,c=''):return f'<td class="{c}">{H.escape(str(t))}</td>' if c else f'<td
 dd=d[d.run_atr>=5]
 fresh=dd[dd.status=='fresh'].assign(a=lambda x:x.dist_pct.abs()).sort_values(['a','vol_rank']).head(10)
 tested=dd[(dd.status=='tested')&(dd.last_touch!='')&(dd.first_touch.str[:10]!=dd.ob_candle.str[:10])].sort_values(['last_touch','confirmed','vol_rank'],ascending=[False,False,True]).head(10)
-nr=''.join('<tr>'+tdh(tv_link(x.symbol),'sym')+td(x.timeframe)+td(x.group,'hn')+td(x.side,x.side)+tdh(spark_svg(x),'ch')+td(f2(x.zone_low),'n')+td(f2(x.zone_high),'n')+td(f2(x.zone_atr),'n hn')+td(f'{x.run_atr:.1f}','n')+td(f'{x.vol_x:.2f}x','n hn')+td(x.formed,'hn')+td('yes' if x.mtf_4h else '','hn')+td(ft(x.ob_candle))+td(f2(x.last_price),'n hn')+td(('+' if x.dist_pct>0 else '')+f2(x.dist_pct)+'%','n')+'</tr>' for x in fresh.itertuples())
+nr=''.join('<tr>'+tdh(tv_link(x.symbol),'sym')+td(x.timeframe)+td(x.group,'hn')+td(x.side,x.side)+tdh(spark_svg(x),'ch')+td(f2(x.zone_low),'n')+td(f2(x.zone_high),'n')+td(f'{x.run_atr:.1f}','n')+td(f'{x.vol_x:.2f}x','n hn')+td(x.formed,'hn')+td('yes' if x.mtf_4h else '','hn')+td(ft(x.ob_candle))+td(f2(x.last_price),'n hn')+td(('+' if x.dist_pct>0 else '')+f2(x.dist_pct)+'%','n')+'</tr>' for x in fresh.itertuples())
 rr=''.join('<tr>'+tdh(tv_link(x.symbol),'sym')+td(x.timeframe)+td(x.group,'hn')+td(x.side,x.side)+tdh(spark_svg(x),'ch')+td(f2(x.zone_low),'n')+td(f2(x.zone_high),'n')+td(f'{x.run_atr:.1f}','n')+td(f'{x.vol_x:.2f}x','n hn')+td(x.formed,'hn')+td('yes' if x.mtf_4h else '','hn')+td(ft(x.ob_candle))+td(ft(x.last_touch))+td(x.touches,'n hn')+td('yes' if x.in_zone_now else 'no','in' if x.in_zone_now else '')+'</tr>' for x in tested.itertuples())
 take=''
 if len(fresh):
