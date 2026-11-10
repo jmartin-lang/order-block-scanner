@@ -44,7 +44,7 @@ def digest_html(top,asof,head):
     for i,r in enumerate(top.itertuples(),1):
         col='#0a7a4b' if r.side=='demand' else '#b3261e'
         fl=[x for x,c in (('quiet push',r.vol_x<=0.92),('in session',r.formed=='session'),('4H overlap',bool(r.mtf_4h))) if c]
-        rows+=(f'<tr><td style="padding:6px 8px">{i}</td><td style="padding:6px 8px"><b>{r.symbol}</b> {r.timeframe}</td>'
+        rows+=(f'<tr><td style="padding:6px 8px">{i}</td><td style="padding:6px 8px"><b><a href="https://www.tradingview.com/chart/?symbol={r.symbol}&interval=15">{r.symbol}</a></b> {r.timeframe}</td>'
                f'<td style="padding:6px 8px;color:{col}">{r.side}</td><td style="padding:6px 8px">{r.zone_low:.2f} to {r.zone_high:.2f}</td>'
                f'<td style="padding:6px 8px">{r.last_price:.2f} ({abs(r.dist_pct):.2f}% {"below" if r.dist_pct<0 else "above"})</td>'
                f'<td style="padding:6px 8px">{r.run_atr:.1f}</td><td style="padding:6px 8px">{", ".join(fl)}</td><td style="padding:6px 8px">{ft(r.ob_candle)}</td></tr>')
