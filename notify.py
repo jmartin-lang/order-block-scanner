@@ -20,38 +20,34 @@ def pick(df,n=10,min_push=5.0):
     # one line per symbol+side: keep the nearest block of each
     f=f.drop_duplicates(['symbol','side'])
     return f.head(n)
+def fd(s):
+    d=dt.datetime.strptime(s[:16],'%Y-%m-%d %H:%M');return f"{d.strftime('%b')} {d.day}"
+def fasof(s):
+    d=dt.datetime.strptime(s[:16],'%Y-%m-%d %H:%M');h=d.hour%12 or 12
+    return f"{h}:{d.minute:02d} {'PM' if d.hour>=12 else 'AM'} ET"
+def pick_tapping(df,n=10,min_push=5.0):
+    f=df[(df.status=='tested')&(df.run_atr>=min_push)&(df.dist_pct==0)&(df.first_touch.str[:10]!=df.ob_candle.str[:10])].copy()
+    f=f.sort_values(['ob_candle','vol_rank'],ascending=[False,True]).drop_duplicates(['symbol','side'])
+    return f.head(n)
 def line(i,r):
-    side='demand' if r.side=='demand' else 'supply'
-    rel='above' if r.dist_pct<0 else 'below'
-    flags=[]
-    if r.vol_x<=0.92:flags.append('quiet push')
-    if r.formed=='session':flags.append('formed in session')
-    if r.mtf_4h:flags.append('4H overlap')
-    stop=r.zone_low if side=='supply' else r.zone_high
-    return (f"{i}. {r.symbol} {r.timeframe} {side.upper()}  zone {r.zone_low:.2f}-{r.zone_high:.2f}  |  price {r.last_price:.2f}, "
-            f"{abs(r.dist_pct):.2f}% {'below' if r.dist_pct<0 else 'above'} the zone  |  push {r.run_atr:.1f} ATR"
-            +(f"  |  {', '.join(flags)}" if flags else '')+f"  |  block candle {ft(r.ob_candle)} ET")
+    return f"{i}. {r.symbol} \u00b7 {r.timeframe} \u00b7 {fd(r.ob_candle)} \u00b7 {r.zone_low:.2f}\u2013{r.zone_high:.2f}"
 def digest_text(df,n=10,header=None):
-    top=pick(df,n);asof=df['asof'].iloc[0] if len(df) else ''
-    now=dt.datetime.now()
-    head=header or f"Order blocks closest to being tapped"
-    body=[head,f"Data as of {asof}. Thin blocks (1 ATR or less) that price pushed 5+ ATR away from and has not revisited.",""]
-    body+= [line(i,r) for i,r in enumerate(top.itertuples(),1)] or ['No fresh blocks match right now.']
-    body+=["",f"Full list with filters: {SITE}","Information only, not advice. Block candle times are Eastern."]
+    top=pick(df,n);tap=pick_tapping(df,n);asof=df['asof'].iloc[0] if len(df) else ''
+    body=[header or "Order blocks closest to being tapped",f"As of {fasof(asof)}",""]
+    body+=[line(i,r) for i,r in enumerate(top.itertuples(),1)] or ['None right now.']
+    body+=["","Currently tapping (price is back inside the zone)"]
+    body+=[line(i,r) for i,r in enumerate(tap.itertuples(),1)] or ['None right now.']
+    body+=["",f"Ticker \u00b7 timeframe \u00b7 block candle date \u00b7 zone",f"Charts and filters: {SITE}"]
     return '\n'.join(body),top
-def digest_html(top,asof,head):
-    rows=''
-    for i,r in enumerate(top.itertuples(),1):
-        col='#0a7a4b' if r.side=='demand' else '#b3261e'
-        fl=[x for x,c in (('quiet push',r.vol_x<=0.92),('in session',r.formed=='session'),('4H overlap',bool(r.mtf_4h))) if c]
-        rows+=(f'<tr><td style="padding:6px 8px">{i}</td><td style="padding:6px 8px"><b><a href="https://www.tradingview.com/chart/?symbol={r.symbol}&interval=15">{r.symbol}</a></b> {r.timeframe}</td>'
-               f'<td style="padding:6px 8px;color:{col}">{r.side}</td><td style="padding:6px 8px">{r.zone_low:.2f} to {r.zone_high:.2f}</td>'
-               f'<td style="padding:6px 8px">{r.last_price:.2f} ({abs(r.dist_pct):.2f}% {"below" if r.dist_pct<0 else "above"})</td>'
-               f'<td style="padding:6px 8px">{r.run_atr:.1f}</td><td style="padding:6px 8px">{", ".join(fl)}</td><td style="padding:6px 8px">{ft(r.ob_candle)}</td></tr>')
-    return (f'<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;font-size:14px;color:#14181f"><h2 style="margin:0 0 4px">{head}</h2>'
-            f'<p style="color:#5d6675;margin:0 0 12px">Data as of {asof}. Thin blocks (1 ATR or less) that price pushed 5+ ATR away from and has not revisited.</p>'
-            '<table style="border-collapse:collapse;font-size:13px"><tr style="text-align:left;color:#5d6675"><th style="padding:6px 8px">#</th><th style="padding:6px 8px">Name</th><th style="padding:6px 8px">Side</th><th style="padding:6px 8px">Zone</th><th style="padding:6px 8px">Price</th><th style="padding:6px 8px">Push (ATR)</th><th style="padding:6px 8px">Flags</th><th style="padding:6px 8px">Block candle (ET)</th></tr>'
-            +rows+f'</table><p style="margin-top:14px"><a href="{SITE}">Open the full list with filters</a></p><p style="color:#5d6675;font-size:12px">Information only, not advice.</p></div>')
+def _li(r):
+    return f'<li style="margin:0 0 6px"><b><a href="https://www.tradingview.com/chart/?symbol={r.symbol}&interval=15" style="color:inherit">{r.symbol}</a></b> &middot; {r.timeframe} &middot; {fd(r.ob_candle)} &middot; {r.zone_low:.2f}&ndash;{r.zone_high:.2f}</li>'
+def digest_html(top,asof,head,tap=None):
+    a=''.join(_li(r) for r in top.itertuples()) or '<li>None right now.</li>'
+    b=''.join(_li(r) for r in tap.itertuples()) if tap is not None and len(tap) else '<li>None right now.</li>'
+    return (f'<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;font-size:16px;line-height:1.4;color:#14181f"><h3 style="margin:0 0 2px">{head}</h3>'
+            f'<div style="color:#5d6675;font-size:13px;margin:0 0 12px">As of {fasof(asof)}</div><ol style="padding-left:22px;margin:0 0 14px">{a}</ol>'
+            f'<h3 style="margin:0 0 6px">Currently tapping (price is back inside the zone)</h3><ol style="padding-left:22px;margin:0 0 12px">{b}</ol>'
+            f'<div style="color:#5d6675;font-size:13px">Ticker &middot; timeframe &middot; block candle date &middot; zone<br><a href="{SITE}">Charts and filters</a></div></div>')
 def send_email(to,subject,text,html=None):
     """SMTP (set SMTP_USER + SMTP_PASSWORD, e.g. a Gmail app password; SMTP_HOST/PORT/FROM optional)."""
     import smtplib
@@ -95,7 +91,7 @@ def main():
     subject=('TEST: ' if a.test else '')+f"Order blocks closest to being tapped, {et:%a %b %-d}"
     to=a.to or os.environ.get('DIGEST_EMAILS','')
     sent=[]
-    html=digest_html(top,df['asof'].iloc[0],'Order blocks closest to being tapped')
+    html=digest_html(top,df['asof'].iloc[0],'Order blocks closest to being tapped',pick_tapping(df,a.n))
     for addr in [x.strip() for x in to.split(',') if x.strip()]:
         try:sent.append(('email '+addr,send_mac_mail(addr,subject,text) if a.via=='mac' else send_email(addr,subject,text,html)))
         except Exception as e:sent.append(('email '+addr,'failed: '+str(e)[:120]))
